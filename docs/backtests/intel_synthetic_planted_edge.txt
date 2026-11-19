@@ -1,0 +1,143 @@
+*** SYNTHETIC DATA: this checks the machinery only. It says nothing about any real market. ***
+
+ENGINES 7-12 BACKTEST  tf=300s  expiry=300s  delay=0s  payout=0.92  cost=0
+
+=== EXPIRY 300s: all / validation / test (chronological) ===
+                                     trades    win%      EV   maxDD   95% CI win rate
+e5_continuation                        4694   55.7%  +0.069    29.6  [54.2%..57.1%] above
+   validation                           937   52.6%  +0.010    20.0  [49.4%..55.8%] inconclusive
+   test (out of sample)                 941   55.9%  +0.073    17.1  [52.7%..59.0%] above
+e7_three_strong_as_continuation        3122   57.3%  +0.101    21.4  [55.6%..59.1%] above
+   validation                           629   59.3%  +0.139    12.5  [55.4%..63.1%] above
+   test (out of sample)                 584   57.2%  +0.098    21.4  [53.1%..61.1%] above
+e7_three_strong_as_reversal            3122   42.7%  -0.181   572.7  [40.9%..44.4%] below
+   validation                           629   40.7%  -0.219   140.2  [36.9%..44.6%] below
+   test (out of sample)                 584   42.8%  -0.178   110.4  [38.9%..46.9%] below
+e7_wss_as_reversal                     2160   39.9%  -0.235   510.4  [37.8%..41.9%] below
+   validation                           460   39.3%  -0.245   114.0  [35.0%..43.9%] below
+   test (out of sample)                 433   38.3%  -0.264   115.2  [33.9%..43.0%] below
+e7_wss_as_continuation                 2160   60.1%  +0.155    17.8  [58.1%..62.2%] above
+   validation                           460   60.7%  +0.165    13.4  [56.1%..65.0%] above
+   test (out of sample)                 433   61.7%  +0.184     9.5  [57.0%..66.1%] above
+e9_single_sweep                        7122   53.4%  +0.024    33.4  [52.2%..54.5%] above
+   validation                          1435   53.6%  +0.029    33.4  [51.0%..56.2%] inconclusive
+   test (out of sample)                1415   53.1%  +0.019    24.9  [50.5%..55.7%] inconclusive
+e9_repeated_cluster                    9370   52.1%  -0.000   125.8  [51.0%..53.1%] inconclusive
+   validation                          1840   50.2%  -0.036    91.5  [47.9%..52.5%] inconclusive
+   test (out of sample)                1868   55.0%  +0.057    25.1  [52.8%..57.3%] above
+e9_with_trend_sweep                    3168   52.9%  +0.016    49.8  [51.2%..54.6%] inconclusive
+   validation                           592   51.2%  -0.017    49.8  [47.2%..55.2%] inconclusive
+   test (out of sample)                 646   54.2%  +0.040    12.5  [50.3%..58.0%] inconclusive
+e9_countertrend_sweep                  4154   52.2%  +0.003    67.3  [50.7%..53.8%] inconclusive
+   validation                           841   48.4%  -0.071    65.5  [45.0%..51.8%] below
+   test (out of sample)                 820   54.5%  +0.047    27.2  [51.1%..57.9%] inconclusive
+e9_no_trend_sweep                      9170   52.7%  +0.012    75.0  [51.7%..53.7%] inconclusive
+   validation                          1842   53.4%  +0.025    39.6  [51.1%..55.6%] inconclusive
+   test (out of sample)                1817   54.0%  +0.038    27.0  [51.7%..56.3%] inconclusive
+e11_continuation_confirmed              408   55.4%  +0.064    10.8  [50.5%..60.1%] inconclusive
+   validation                            86   51.2%  -0.018     7.0  [40.8%..61.4%] inconclusive
+   test (out of sample)                  86   57.0%  +0.094     5.5  [46.4%..66.9%] inconclusive
+e11_continuation_no_exhaustion_gate     694   53.7%  +0.032    12.9  [50.0%..57.4%] inconclusive
+   validation                           134   50.7%  -0.026     8.5  [42.4%..59.1%] inconclusive
+   test (out of sample)                 147   52.4%  +0.006    10.2  [44.3%..60.3%] inconclusive
+e10_reversal_confirmed                 1266   59.0%  +0.133    12.1  [56.3%..61.7%] above
+   validation                           234   59.0%  +0.132     9.6  [52.6%..65.1%] above
+   test (out of sample)                 254   61.8%  +0.187     8.6  [55.7%..67.6%] above
+pipeline_all                           1674   58.1%  +0.116    19.2  [55.7%..60.5%] above
+   validation                           320   56.9%  +0.092    10.8  [51.4%..62.2%] inconclusive
+   test (out of sample)                 340   60.6%  +0.163     7.4  [55.3%..65.6%] above
+
+--- e9_single_sweep by alignment (expiry 300s) ---
+                                     trades    win%      EV   maxDD   95% CI win rate
+COUNTERTREND                           1473   53.1%  +0.019    26.5  [50.5%..55.6%] inconclusive
+NO_TREND                               4041   53.6%  +0.028    37.9  [52.0%..55.1%] inconclusive
+WITH_TREND                             1608   53.1%  +0.020    23.4  [50.7%..55.5%] inconclusive
+
+--- e9_single_sweep by sweepCount (expiry 300s) ---
+                                     trades    win%      EV   maxDD   95% CI win rate
+1                                      7122   53.4%  +0.024    33.4  [52.2%..54.5%] above
+
+--- e9_repeated_cluster by sweepCount (expiry 300s) ---
+                                     trades    win%      EV   maxDD   95% CI win rate
+2                                      4014   52.3%  +0.004    77.9  [50.7%..53.8%] inconclusive
+3                                      2268   50.0%  -0.041   106.2  [47.9%..52.0%] below
+4+                                     3088   53.3%  +0.024    56.0  [51.6%..55.1%] inconclusive
+
+--- e9_repeated_cluster by trend (expiry 300s) ---
+                                     trades    win%      EV   maxDD   95% CI win rate
+BEARISH                                2228   51.6%  -0.009    74.2  [49.5%..53.7%] inconclusive
+BULLISH                                2013   52.7%  +0.011    34.1  [50.5%..54.8%] inconclusive
+NEUTRAL                                5129   52.0%  -0.001    99.2  [50.6%..53.4%] inconclusive
+
+--- e11_continuation_confirmed by trend (expiry 300s) ---
+                                     trades    win%      EV   maxDD   95% CI win rate
+BEARISH                                 209   54.1%  +0.038    10.2  [47.3%..60.7%] inconclusive
+BULLISH                                 199   56.8%  +0.090    11.0  [49.8%..63.5%] inconclusive
+
+--- e11_continuation_confirmed by sweepCount (expiry 300s) ---
+                                     trades    win%      EV   maxDD   95% CI win rate
+1                                       199   57.8%  +0.110     5.9  [50.8%..64.4%] inconclusive
+2                                       112   55.4%  +0.063    11.3  [46.1%..64.2%] inconclusive
+3                                        46   58.7%  +0.127     5.1  [44.3%..71.7%] inconclusive
+4+                                       51   43.1%  -0.172     9.6  [30.5%..56.7%] inconclusive
+
+--- e11_continuation_confirmed by exhaustion (expiry 300s) ---
+                                     trades    win%      EV   maxDD   95% CI win rate
+HEALTHY_CONTINUATION                    326   56.1%  +0.078     9.0  [50.7%..61.4%] inconclusive
+UNCLEAR                                  82   52.4%  +0.007     6.6  [41.8%..62.9%] inconclusive
+
+--- e10_reversal_confirmed by trend (expiry 300s) ---
+                                     trades    win%      EV   maxDD   95% CI win rate
+BEARISH                                 637   61.2%  +0.176    15.4  [57.4%..64.9%] above
+BULLISH                                 629   56.8%  +0.090    11.6  [52.9%..60.6%] above
+
+--- e10_reversal_confirmed by sweepCount (expiry 300s) ---
+                                     trades    win%      EV   maxDD   95% CI win rate
+1                                      1066   59.7%  +0.146    10.2  [56.7%..62.6%] above
+2                                       177   54.8%  +0.052     7.0  [47.4%..62.0%] inconclusive
+3                                        21   61.9%  +0.189     4.3  [40.9%..79.2%] inconclusive
+4+                                        2   50.0%  -0.040     1.0  [9.5%..90.5%] inconclusive
+
+--- pipeline_all by kind (expiry 300s) ---
+                                     trades    win%      EV   maxDD   95% CI win rate
+CONFIRMED_REVERSAL                     1266   59.0%  +0.133    12.1  [56.3%..61.7%] above
+WITH_TREND_CONTINUATION                 408   55.4%  +0.064    10.8  [50.5%..60.1%] inconclusive
+
+--- pipeline_all by trend (expiry 300s) ---
+                                     trades    win%      EV   maxDD   95% CI win rate
+BEARISH                                 846   59.5%  +0.142    12.6  [56.1%..62.7%] above
+BULLISH                                 828   56.8%  +0.090    14.8  [53.4%..60.1%] above
+
+FOURTH-CANDLE OUTCOMES (Engine 7)
+THREE_STRONG               n=  3125  continued   1792  reversed   1333  flat    0  continuation  57.3% [55.6%..59.1%]  continues more than 50%
+   train                   n=  1912  continued   1085  reversed    827  flat    0  continuation  56.7% [54.5%..59.0%]  continues more than 50%
+   validation              n=   629  continued    373  reversed    256  flat    0  continuation  59.3% [55.4%..63.1%]  continues more than 50%
+   test                    n=   584  continued    334  reversed    250  flat    0  continuation  57.2% [53.1%..61.1%]  continues more than 50%
+WEAK_STRONG_STRONG         n=  2162  continued   1301  reversed    861  flat    0  continuation  60.2% [58.1%..62.2%]  continues more than 50%
+   train                   n=  1269  continued    755  reversed    514  flat    0  continuation  59.5% [56.8%..62.2%]  continues more than 50%
+   validation              n=   460  continued    279  reversed    181  flat    0  continuation  60.7% [56.1%..65.0%]  continues more than 50%
+   test                    n=   433  continued    267  reversed    166  flat    0  continuation  61.7% [57.0%..66.1%]  continues more than 50%
+MIXED_STRENGTH             n= 31080  continued  16984  reversed  14096  flat    0  continuation  54.6% [54.1%..55.2%]  continues more than 50%
+   train                   n= 18486  continued  10122  reversed   8364  flat    0  continuation  54.8% [54.0%..55.5%]  continues more than 50%
+   validation              n=  6311  continued   3453  reversed   2858  flat    0  continuation  54.7% [53.5%..55.9%]  continues more than 50%
+   test                    n=  6283  continued   3409  reversed   2874  flat    0  continuation  54.3% [53.0%..55.5%]  continues more than 50%
+ANY_THREE_SAME_COLOUR      n= 36367  continued  20077  reversed  16290  flat    0  continuation  55.2% [54.7%..55.7%]  continues more than 50%
+   train                   n= 21667  continued  11962  reversed   9705  flat    0  continuation  55.2% [54.5%..55.9%]  continues more than 50%
+   validation              n=  7400  continued   4105  reversed   3295  flat    0  continuation  55.5% [54.3%..56.6%]  continues more than 50%
+   test                    n=  7300  continued   4010  reversed   3290  flat    0  continuation  54.9% [53.8%..56.1%]  continues more than 50%
+Fourth candle = the candle right after the three. Continuation rate = share closing the same way as the three among candles that closed up or down. Hypotheses are tested separately; none is assumed true.
+
+Pipeline parameters (all configurable): {"structure":{"pivotLeft":2,"pivotRight":2,"breakBuffer":0,"mssFromNeutral":true},"sweep":{"sources":["pattern12"],"clusterWindow":12,"recentWindow":20,"monitorCandles":5},"sequence":{"strongBodyRatio":0.65,"maxCombinedWickRatio":0.3,"weakBodyRatioMax":0.5,"weakBodyRatioMin":0.1,"weakVsStrongBodyMult":0.75,"requireContiguousTimes":true},"exhaustion":{"lookback":12,"recentCandles":4,"bodyDecay":0.1,"wickBodyRatio":0.6,"failedAttempts":2,"opposingShare":0.45,"extremeRecent":4,"changesSign":2,"minSigns":3,"mssRecent":10},"continuation":{"rules":{"requireWickOnlySweep":true,"minConfirmBodyRatio":0,"requireContiguousTimes":true},"requireTrendAtConfirm":true,"blockOnExhaustion":true},"reversal":{"maxCandlesToConfirm":20,"invalidateOnCloseBeyondExtreme":true,"requireRefBeforeSweep":false},"minHistory":30,"duplicateWindow":3,"conflictWindow":3,"allowContinuation":true,"allowReversal":true,"resetOnGap":true}
+
+Assumptions:
+  - The signal exists when the signal candle CLOSES. Entry is the first available price at or after (close + delaySec): the OPEN of the next candle when delaySec = 0, or a price from the optional finer series. Settlement is exactly `expiry` seconds after the ACTUAL fill: the close of the candle that ends then (chart data) or the first fine-series price at or after it. Slippage, requotes and broker rejections are not modelled; delay is only as precise as the price series given.
+  - Payout and cost are flat per trade. Real payouts differ by instrument, expiry and time of day.
+  - One trade at a time per strategy, instrument and expiry; overlapping signals are skipped and counted.
+  - Sessions are UTC hours of the entry candle: Asia 00-07, London 07-13, New York 13-21, Late 21-24.
+  - Segments are chronological per instrument (train / validation / test). Trades settling after a segment boundary are embargoed from segment statistics.
+  - Engine 5 uses the strict sweep rule (Pattern 1/2 plus wick-only); Engine 6 uses body ratio 0.65, wick ratio 0.35, 1.2x median of 20, 2 of 3 strong, weaker candle body >= 0.30 of range, combined body >= 3.0x median. The last two are my assumptions; all are configurable and untuned.
+  - Win-rate intervals are 95% Wilson intervals. "above breakeven" means the whole interval is above the break-even win rate for the chosen payout and cost.
+  - Engine 9 baselines enter straight after the sweep candle to show what a sweep does on its own; they are not trading rules.
+  - Many strategies and breakdown cells are compared here. A cell that looks good in one segment is a multiple-comparison result, not proof of an edge; look at the out-of-sample test rows and the intervals.
+  - No result in this report guarantees that any sweep count or candle sequence leads to a reversal or a continuation. 
+

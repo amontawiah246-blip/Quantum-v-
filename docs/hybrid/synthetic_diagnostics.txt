@@ -1,0 +1,98 @@
+*** SYNTHETIC DATA: this checks the machinery only. It says nothing about any real market. ***
+HYBRID ENGINE: REJECTION DIAGNOSTICS
+
+Data health: 80000 candles seen, 80000 accepted | invalid OHLC 0, unfinished 0, duplicates 0, out of order 0, flat 0 | gaps 0 (0 missing candles), resets 0 | misaligned 0, irregular spacing 0 | spacing 300 s (expected 300 s)
+Funnel: 79524 candles evaluated -> 18999 with a Stage 1 setup -> 19528 candidate (candle, side) observations -> 18672 traded
+Rejections by stage: CONFLICT 655, STAGE2_INDICATORS 201
+
+Top rejection reasons:
+      276  CONFLICT: BUY and SELL setups on the same candle are too close to rank
+      201  STAGE2_INDICATORS: 3 of 3 indicators contradict the setup (veto at >= 100%)
+      162  CONFLICT: the opposite setup on the same candle ranks higher (indicator evidence 0.67 vs 0.00)
+       96  CONFLICT: the opposite setup on the same candle ranks higher (indicator evidence 1.00 vs -0.33)
+       36  CONFLICT: the opposite setup on the same candle ranks higher (indicator evidence 0.33 vs -0.33)
+       35  CONFLICT: the opposite setup on the same candle ranks higher (indicator evidence 0.67 vs -0.33)
+       18  CONFLICT: the opposite setup on the same candle ranks higher (indicator evidence 0.67 vs -0.67)
+       13  CONFLICT: the opposite setup on the same candle ranks higher (indicator evidence 0.00 vs -0.67)
+       13  CONFLICT: the opposite setup on the same candle ranks higher (indicator evidence 0.33 vs -0.67)
+        4  CONFLICT: the opposite setup on the same candle ranks higher (indicator evidence 0.33 vs 0.00)
+        1  CONFLICT: the opposite setup on the same candle ranks higher (indicator evidence -0.33 vs -0.67)
+        1  CONFLICT: the opposite setup on the same candle ranks higher (indicator evidence 0.00 vs -0.33)
+
+Pattern funnel (first check each candle failed; FIRED = pattern found):
+  BEARISH_SWEEP
+      39893  previous candle bullish
+      19755  sweeper bearish
+      10420  high strictly above previous high
+       6026  FIRED
+       3430  close inside previous real body
+  BULLISH_SWEEP
+      39631  previous candle bearish
+      20018  sweeper bullish
+      10357  low strictly below previous low
+       6057  FIRED
+       3461  close inside previous real body
+  EQ_UPPER_WICK_SWEEP
+      57364  equal highs pool
+      10979  sweeper bearish
+      10410  high strictly above the equal level
+        486  FIRED
+        285  rejection wick
+  EQ_LOWER_WICK_SWEEP
+      57413  equal lows pool
+      11139  sweeper bullish
+      10203  low strictly below the equal level
+        471  FIRED
+        298  rejection wick
+  SWEEP_CONTINUATION
+      33833  no sweep: previous candle bullish
+      19755  no sweep: sweeper bearish
+      10422  no sweep: high strictly above previous high
+       3430  no sweep: close inside previous real body
+       3000  invalidated: B did not close bullish
+       2989  invalidated: B did not close bearish
+       2955  FIRED
+       1599  invalidated: C did not close bullish
+  MOMENTUM_BODY_DOMINANCE
+      59693  3 candles in one direction, none opposite or doji
+       5010  candle 1 not a doji / tiny-body candle
+       4976  enough strong candles
+       3764  candle 2 not a doji / tiny-body candle
+       3316  FIRED
+       2758  candle 3 not a doji / tiny-body candle
+          7  combined body strength
+  WEAK_STRONG_STRONG
+      59693  not three same-direction candles
+      17614  classified MIXED_STRENGTH
+       1205  classified THREE_STRONG
+       1012  FIRED
+  REPEATED_SWEEP
+      67069  no sweep on this candle
+       7769  FIRED
+       4686  first sweep of its cluster
+
+By primary pattern:
+  pattern                    candidates  traded  rejected
+  BULLISH_SWEEP                    2219    2201  STAGE2_INDICATORS:18
+  BEARISH_SWEEP                    2159    2146  STAGE2_INDICATORS:13
+  REPEATED_SWEEP                   7120    7031  STAGE2_INDICATORS:89
+  EQ_LOWER_WICK_SWEEP               466     464  STAGE2_INDICATORS:2
+  MOMENTUM_BODY_DOMINANCE          3114    2960  CONFLICT:149 STAGE2_INDICATORS:5
+  SWEEP_CONTINUATION               2955    2748  CONFLICT:153 STAGE2_INDICATORS:54
+  EQ_UPPER_WICK_SWEEP               483     479  STAGE2_INDICATORS:4
+  WEAK_STRONG_STRONG               1012     643  CONFLICT:353 STAGE2_INDICATORS:16
+
+Stage 1 sensitivity (measurement only, frozen rules are what trades):
+  BEARISH/BULLISH_SWEEP        frozen  12082  looser  12082  (literal Pattern 1/2 text (open may be beyond the swept level))
+  MOMENTUM_BODY_DOMINANCE      frozen   3316  looser   4225  (strong body ratio 0.55, wick ratio 0.45, combined body 2.0x median)
+  WEAK_STRONG_STRONG           frozen   1012  looser   1542  (strong body ratio 0.55)
+  EQ_UPPER/LOWER_WICK_SWEEP    frozen    957  looser   1923  (tolerance 0.2 x median range, rejection wick 0.25)
+
+ATTRIBUTION OF THE SIGNAL COUNT
+No data or threshold problem was measured; the signal count looks like what these rules produce on this data (234.8 trades per 1000 candles; 856 candidate rejections).
+  [UNLIKELY    ] Overly restrictive thresholds: 19528 candidate setups; 201 (1.0%) rejected after Stage 1 by indicators or the model. Counts with looser candlestick definitions (measurement only, never traded): BEARISH/BULLISH_SWEEP: 12082 -> 12082 (literal Pattern 1/2 text (open may be beyond the swept level)); MOMENTUM_BODY_DOMINANCE: 3316 -> 4225 (strong body ratio 0.55, wick ratio 0.45, combined body 2.0x median); WEAK_STRONG_STRONG: 1012 -> 1542 (strong body ratio 0.55); EQ_UPPER/LOWER_WICK_SWEEP: 957 -> 1923 (tolerance 0.2 x median range, rejection wick 0.25). Candlestick thresholds are frozen; only Stage 2 and Stage 3 settings can be changed, and only through a logged configuration change.
+  [UNLIKELY    ] Incorrect candle detection: independent re-implementation of the sweep and equal-level rules compared on 79520 candles: 0 mismatches
+  [UNLIKELY    ] Timeframe synchronisation: observed spacing 300 s vs expected 300 s; 0 candles (0.00%) not on a 300 s boundary; 0 irregular spacings
+  [UNLIKELY    ] Missing historical candles: 0 gaps, 0 candles missing (0.00%), 0 state resets, 476 accepted candles (0.59%) spent re-warming after the start or a reset
+  [UNLIKELY    ] Incorrect OHLC data: 0 invalid OHLC (0.00%), 0 flat filler candles (0.00%), 0 duplicates, 0 out of order, 0 unfinished
+  [UNLIKELY    ] Actual absence of qualifying opportunities: 19528 Stage 1 candidates in 79524 evaluated candles (245.6 per 1000). Data checks found nothing wrong. Setups are plentiful, so a low trade count would come from the later stages or from the data checks above, not from a shortage of setups.

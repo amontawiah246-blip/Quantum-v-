@@ -1,0 +1,425 @@
+import React, { useEffect, useRef, useState } from "react";
+import { Activity, ChartColumn, ChevronDown, Ellipsis, House, Menu as MenuIcon, Wallet } from "lucide-react";
+import ChartView, { ChartHandle } from "./ChartView";
+import Sheet from "./Sheet";
+import { BrokerLogo } from "./BrokerMenu";
+import MarketPicker from "./MarketPicker";
+import MarketIcon from "./MarketIcon";
+import ChartMenu from "./ChartMenu";
+import TradePanel from "./TradePanel";
+import { Home, Api, Menu, StatusData } from "./Pages";
+import SignalsPage from "./SignalsPage";
+import HistoryPage from "./HistoryPage";
+import SignalPackageAgents from "./SignalPackageAgents";
+import SweepAlerts, { ENGINE_LABEL, lsccTag, useSweepFeed } from "./SweepAlerts";
+import ClassicMode from "./ClassicMode";
+import ProMode from "./ProMode";
+import AiTraderMode from "./AiTraderMode";
+import { ModeBox, ModePopup } from "./ModePicker";
+import DerivTradeTypes from "./DerivTradeTypes";
+import { DEFAULT_DERIV_TYPE, DERIV_TYPES, derivTypeOf } from "./derivTypes";
+import { apiFetch } from "./api";
+import { shortName, splitName, Asset, ChartType, CHART_TYPES, Mode, MODES } from "./assets";
+import { formatTimingLabel } from "./globalConfig";
+import { useGlobalTiming } from "./useGlobalTiming";
+import "./styles.css";
+import "./modes.css";
+
+const defaultBridge = () => {
+  if (typeof window === "undefined") return "localhost:3000";
+  const saved = localStorage.getItem("bridge");
+  if (saved && !saved.includes(":8765")) {
+    return saved;
+  }
+  return location.host;
+};
+
+function remembered<T extends string>(key: string, allowed: readonly T[], fallback: T): T {
+  try {
+    const v = localStorage.getItem(key) as T | null;
+    if (v && allowed.includes(v)) return v;
+  } catch {
+    /* storage unavailable */
+  }
+  return fallback;
+}
+const remember = (key: string, value: string) => {
+  try {
+    localStorage.setItem(key, value);
+  } catch {
+    /* ignore */
+  }
+};
+
+export default function App() {
+  const [tab, setTab] = useState<string>("chart");
+  const [bridge, setBridgeState] = useState(defaultBridge);
+  const [broker] = useState("deriv"); // Deriv is exclusively used
+  const [asset, setAsset] = useState("frxXAUUSD"); // Default Deriv market: Gold / USD (XAUUSD)
+  const [sheet, setSheet] = useState<string | null>(null); // pair | tf | exp | more
+  const [assets, setAssets] = useState<Asset[]>([]);
+  const [status, setStatus] = useState<StatusData | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
+  const [chartType, setChartTypeState] = useState<ChartType>(() => remembered("qx-chart-type", CHART_TYPES.map((c) => c.id), "candles"));
+  const [derivType, setDerivTypeState] = useState<string>(() => remembered("qx-deriv-type", DERIV_TYPES.map((t) => t.id), DEFAULT_DERIV_TYPE));
+  const [typePicker, setTypePicker] = useState(false);
+  const [toast, setToast] = useState("");
+  const [mode, setMode] = useState<Mode>(() => remembered<Mode>("qx-mode", MODES.map((m) => m.id), "classic"));
+  const [modeOpen, setModeOpen] = useState(false);
+  const [visited, setVisited] = useState<Record<string, boolean>>({});   // a mode screen stays alive once opened, so its trades keep being tracked
+  const chartRef = useRef<ChartHandle>(null);
+
+  const setBridge = (v: string) => {
+    localStorage.setItem("bridge", v);
+    setBridgeState(v);
+  };
+  const setChartType = (t: ChartType) => {
+    setChartTypeState(t);
+    remember("qx-chart-type", t);
+  };
+  const pickDerivType = (id: string) => {
+    setDerivTypeState(id);
+    remember("qx-deriv-type", id);
+    setTypePicker(false);
+    setSheet(null);
+    setTab("chart");
+    setToast(`${derivTypeOf(id).label} selected`);
+  };
+
+  const isHttps = typeof window !== "undefined" && window.location.protocol === "https:";
+  const isLocal = bridge.includes("localhost") || bridge.includes("127.0.0.1");
+  const httpProto = isHttps && !isLocal ? "https" : "http";
+  const wsProto = isHttps && !isLocal ? "wss" : "ws";
+  const http = bridge.startsWith("http") ? bridge : `${httpProto}://${bridge}`;
+  const wsBase = bridge.startsWith("ws") ? bridge : `${wsProto}://${bridge}`;
+  const { timing, timeframes, expiries, updateTiming } = useGlobalTiming(http);
+  const tf = timing.tfSec;
+
+  // Wick sweep alerts from the agents: toast + Menu badge from any tab, screenshots on the Menu tab.
+  const sweep = useSweepFeed(http, (a) => setToast(a.engine === "lscc" && a.lscc ? `${lsccTag(a)} on ${a.name}. Open Menu to see it` : `${a.side} ${ENGINE_LABEL[a.engine]}${a.ok ? "" : " (skipped)"} on ${a.name}. Open Menu to see it`));
+  useEffect(() => { if (tab === "menu") sweep.markSeen(); }, [tab, sweep.lastId]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Status + asset list from Deriv
+  useEffect(() => {
+    let dead = false;
+    const load = async () => {
+      try {
+        const sRes = await fetch(`${http}/api/status?broker=deriv`);
+        if (sRes.ok) {
+          const s = await sRes.json();
+          if (!dead) setStatus(s);
+        } else if (!dead) {
+          setStatus(null);
+        }
+
+        const aRes = await fetch(`${http}/api/assets?broker=deriv`);
+        if (aRes.ok) {
+          const a = await aRes.json();
+          if (!dead && Array.isArray(a)) {
+            setAssets(a);
+            if (a.length > 0 && !a.some((x) => x.symbol === asset)) {
+              setAsset(a[0].symbol);
+            }
+          }
+        }
+      } catch {
+        if (!dead) setStatus(null);
+      }
+    };
+    load();
+    const id = setInterval(load, status?.ready ? 30000 : 3000);
+    return () => {
+      dead = true;
+      clearInterval(id);
+    };
+  }, [http, status?.ready, asset]);
+
+  useEffect(() => {
+    if (!toast) return;
+    const id = setTimeout(() => setToast(""), 2500);
+    return () => clearTimeout(id);
+  }, [toast]);
+
+  const current = assets.find((a) => a.symbol === asset);
+  const currentAsset: Asset = current ?? { symbol: asset, name: "Gold / USD (XAUUSD)" };
+  const tfLabel = timeframes.find((t) => t.sec === tf)?.label ?? formatTimingLabel(tf);
+  const expLabel = expiries.find((e) => e.sec === timing.expirySec)?.label ?? formatTimingLabel(timing.expirySec);
+  const syncTotal = timing.requiredAgents.length;
+  const syncDone = timing.syncedAgents.length;
+
+  const close = () => setSheet(null);
+
+  const switchAccount = async (demo: boolean) => {
+    setToast(`Switching Deriv account to ${demo ? "DEMO" : "REAL"}…`);
+    try {
+      const r = await apiFetch(`${http}/api/account`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ broker: "deriv", demo }),
+      });
+      const d = await r.json();
+      if (d.status !== "ok") {
+        setToast(d.msg || "Could not switch the account");
+        return;
+      }
+      for (let i = 0; i < 8; i++) {
+        await new Promise((res) => setTimeout(res, 1200));
+        const sr = await fetch(`${http}/api/status?broker=deriv`);
+        const st = await sr.json();
+        if (st.ready && st.demo === demo) {
+          setStatus(st);
+          setToast(`Now trading on Deriv ${demo ? "DEMO" : "REAL"} account`);
+          return;
+        }
+      }
+      setToast("Account switched. Deriv balance updated.");
+    } catch {
+      setToast("Could not reach the server");
+    }
+  };
+
+  const go = (id: string) => {
+    setTab(id);
+    setSheet(null);
+    setTypePicker(false);
+    setModeOpen(false);
+  };
+  const pickMode = (m: Mode) => {
+    setMode(m);
+    remember("qx-mode", m);
+    setVisited((v) => ({ ...v, [m]: true }));
+    go(m);
+  };
+  const inMode = tab === "classic" || tab === "pro" || tab === "ai";
+  const toggleSheet = (id: string) => {
+    setSheet((s) => (s === id ? null : id));
+  };
+
+  const navBtn = (id: string, name: string, icon: React.ReactNode) => (
+    <button key={id} className={tab === id ? "on" : ""} onClick={() => go(id)}>
+      {icon}
+      <span>{name}</span>
+    </button>
+  );
+
+  return (
+    <div className="app">
+      {tab === "chart" && (
+        <header className="top">
+          {/* Deriv Broker & Account Live Badge */}
+          <button
+            className="chip brk flex items-center gap-1.5 px-3 py-1 bg-[#101b33] border border-[#1e2f52] rounded-xl hover:border-blue-500/50 transition cursor-pointer"
+            onClick={() => switchAccount(!status?.demo)}
+            title="Click to switch Demo / Real account"
+          >
+            <BrokerLogo id="deriv" size={24} />
+            <span className="font-bold text-xs text-white">DERIV</span>
+            <span
+              className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${
+                status?.demo ? "bg-amber-500/20 text-amber-300 border border-amber-500/30" : "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
+              }`}
+            >
+              {status?.demo ? "DEMO" : "REAL"}
+            </span>
+            {status?.balance != null && (
+              <span className="text-xs font-mono font-bold text-emerald-400 ml-1">
+                ${status.balance.toFixed(2)}
+              </span>
+            )}
+          </button>
+
+          {/* Synthetic Market Selector */}
+          <button className={`chip pair ${sheet === "pair" ? "open" : ""}`} onClick={() => toggleSheet("pair")}>
+            <MarketIcon asset={currentAsset} small />
+            <span className="nm">{shortName(currentAsset)}</span>
+            {current?.payout != null && current.payout > 0 && <em>{current.payout}%</em>}
+            <ChevronDown size={16} className="chev" />
+          </button>
+
+          {/* Global Chart Timeframe Selector */}
+          <button className={`chip tfc ${sheet === "tf" ? "open" : ""}`} onClick={() => toggleSheet("tf")} title="Global chart timeframe (all agents)">
+            <span className="text-[10px] text-slate-400 mr-1">TF</span>
+            {tfLabel}
+            <ChevronDown size={16} />
+          </button>
+
+          {/* Global Trade Expiry Selector */}
+          <button className={`chip tfc ${sheet === "exp" ? "open" : ""}`} onClick={() => toggleSheet("exp")} title="Global trade expiry duration">
+            <span className="text-[10px] text-slate-400 mr-1">EXP</span>
+            {expLabel}
+            <ChevronDown size={16} />
+          </button>
+
+          {/* Agent Sync Status Indicator */}
+          <span
+            className={`hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-mono font-bold border ${
+              timing.transitioning
+                ? "bg-amber-500/15 text-amber-300 border-amber-500/40 animate-pulse"
+                : "bg-emerald-500/15 text-emerald-300 border-emerald-500/30"
+            }`}
+            title={`Active TF ${tfLabel} · Expiry ${expLabel} · Sync v${timing.syncVersion}`}
+          >
+            <i className={`w-1.5 h-1.5 rounded-full ${timing.transitioning ? "bg-amber-400" : "bg-emerald-400"}`} />
+            {timing.transitioning ? `Syncing ${syncDone}/${syncTotal}` : syncTotal > 0 ? `${syncDone}/${syncTotal} Synced` : "Synced"}
+          </span>
+
+          {/* Chart Options */}
+          <button className={`icon dots ${sheet === "more" ? "on" : ""}`} onClick={() => toggleSheet("more")} aria-label="Chart options">
+            <Ellipsis size={20} />
+          </button>
+        </header>
+      )}
+
+      <main>
+        {tab === "home" && <Home status={status} brokerName="Deriv" onOpenChart={() => go("chart")} onSwitchAccount={switchAccount} onShowHistory={() => setTab("history")} />}
+        {tab === "history" && <HistoryPage apiBase={http} onBack={() => setTab("home")} />}
+
+        {tab === "package" && (
+          <SignalPackageAgents
+            http={http}
+            wsBase={wsBase}
+            onOpenChart={(sym) => {
+              setAsset(sym);
+              go("chart");
+            }}
+            onToast={setToast}
+            activeBalance={status?.balance ?? null}
+            isDemo={status?.demo ?? true}
+            onSwitchAccount={switchAccount}
+            sweep={sweep}
+          />
+        )}
+
+        {tab === "signals" && (
+          <SignalsPage
+            wsBase={wsBase}
+            apiBase={http}
+            broker="deriv"
+            setBroker={() => {}}
+            asset={asset}
+            setAsset={setAsset}
+            assets={assets}
+            onOpenChart={() => go("chart")}
+            onToast={setToast}
+            derivType={derivType}
+            onPickDerivType={pickDerivType}
+            balance={status?.balance}
+            isDemo={status?.demo}
+            onSwitchAccount={switchAccount}
+            sweep={sweep}
+          />
+        )}
+
+        {tab === "chart" && (
+          <ChartView ref={chartRef} wsBase={wsBase} broker="deriv" asset={asset} tf={tf} reloadKey={reloadKey} chartType={chartType} />
+        )}
+
+        {tab === "chart" && (
+          <TradePanel
+            http={http}
+            broker="deriv"
+            asset={asset}
+            assetLabel={splitName(currentAsset).label}
+            payout={current?.payout ?? 95}
+            closed={current?.active === false}
+            mode="classic"
+            globalExpirySec={timing.expirySec}
+            onChangeExpiry={(sec) => { void updateTiming({ expirySec: sec }); }}
+            blockReason={timing.transitioning ? `Syncing ${syncDone}/${syncTotal} agents to ${tfLabel}…` : null}
+            onToast={setToast}
+          />
+        )}
+
+        {(visited.classic || tab === "classic") && (
+          <div className="modepane" style={{ display: tab === "classic" ? "flex" : "none" }}>
+            <ClassicMode http={http} wsBase={wsBase} assets={assets} asset={asset} setAsset={setAsset} balance={status?.balance} isDemo={status?.demo} ready={!!status?.ready} onToast={setToast} onExit={() => go("chart")} />
+          </div>
+        )}
+        {(visited.pro || tab === "pro") && (
+          <div className="modepane" style={{ display: tab === "pro" ? "flex" : "none" }}>
+            <ProMode http={http} balance={status?.balance} isDemo={status?.demo} ready={!!status?.ready} onToast={setToast} onExit={() => go("chart")} />
+          </div>
+        )}
+        {tab === "ai" && <AiTraderMode onExit={() => go("chart")} />}
+
+        {tab === "api" && <Api bridge={bridge} setBridge={setBridge} broker="deriv" status={status} />}
+        {tab === "menu" && <Menu><SweepAlerts feed={sweep} http={http} /></Menu>}
+
+        {tab === "chart" && typePicker && (
+          <DerivTradeTypes variant="overlay" current={derivType} onBack={() => setTypePicker(false)} onPick={pickDerivType} />
+        )}
+
+        {tab === "chart" && sheet === "pair" && (
+          <MarketPicker broker="deriv" assets={assets} selected={asset} onPick={(s) => { setAsset(s); close(); }} onClose={close} />
+        )}
+
+        {tab === "chart" && sheet === "more" && (
+          <ChartMenu
+            chart={chartRef.current}
+            chartType={chartType}
+            onType={setChartType}
+            onReset={() => setReloadKey((k) => k + 1)}
+            onToast={setToast}
+            onClose={close}
+          />
+        )}
+      </main>
+
+      {toast && <div className="toast" role="status">{toast}</div>}
+
+      <div className="navwrap">
+        <nav className="bottom">
+          {navBtn("chart", "Live Chart", <ChartColumn size={20} />)}
+          {navBtn("signals", "Signals", <Activity size={20} />)}
+          <ModeBox mode={mode} open={modeOpen || inMode} onClick={() => setModeOpen((o) => !o)} />
+          {navBtn("home", "Account", <Wallet size={20} />)}
+          {navBtn("menu", "Menu", (
+            <span className="sw-iconwrap">
+              <MenuIcon size={20} />
+              {tab !== "menu" && sweep.unseen > 0 && <i className="sw-badge">{sweep.unseen > 9 ? "9+" : sweep.unseen}</i>}
+            </span>
+          ))}
+        </nav>
+        {modeOpen && <ModePopup mode={mode} onPick={pickMode} onClose={() => setModeOpen(false)} />}
+      </div>
+
+      {sheet === "tf" && (
+        <Sheet title="Global Chart Timeframe (All Agents)" onClose={close}>
+          {timeframes.map((t) => (
+            <button
+              key={t.sec}
+              className={`item ${t.sec === tf ? "sel" : ""}`}
+              onClick={async () => {
+                close();
+                const res = await updateTiming({ tfSec: t.sec });
+                if (!res.ok) setToast(res.error || "Failed to update timeframe");
+                else setToast(`Global timeframe set to ${t.label} (syncing all agents)`);
+              }}
+            >
+              <span>{t.description || t.label}</span>
+            </button>
+          ))}
+        </Sheet>
+      )}
+
+      {sheet === "exp" && (
+        <Sheet title="Global Trade Expiry" onClose={close}>
+          {expiries.map((e) => (
+            <button
+              key={e.sec}
+              className={`item ${e.sec === timing.expirySec ? "sel" : ""}`}
+              onClick={async () => {
+                close();
+                const res = await updateTiming({ expirySec: e.sec });
+                if (!res.ok) setToast(res.error || "Failed to update trade expiry");
+                else setToast(`Global trade expiry set to ${e.label}`);
+              }}
+            >
+              <span>{e.description || e.label}</span>
+            </button>
+          ))}
+        </Sheet>
+      )}
+    </div>
+  );
+}
